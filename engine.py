@@ -16,7 +16,7 @@ w = 64                # initial position (x,y)         (0,0)------->
 h = 64                #                                     |      X
 x = 40                #                                     |
 y = screen_H - h      #                                     V Y             
-v = 10                # if starting pos(x,y) is not integer-divisble by 'step"' size v, character may partially disappear from screen
+v = 3                # if starting pos(x,y) is not integer-divisble by 'step"' size v, character may partially disappear from screen
 isJump = False
 jumpCount = 10       # jump will be animated in 10 frames up and 10 frames back down, if you want to change it the 10 is hardcoded in jump loop too
 left = False         # these 3 vars will keep track of which way and how many steps is the character walking, for accurate image insertions
@@ -26,7 +26,18 @@ walkCount = 0
 def redrawGameWin() :
     global walkCount
     win.blit(bg, (0,0))
-    pygame.draw.rect(win, (255,0,0), (x,y,w,h))
+    if walkCount + 1 >= 27 :        # every 27 steps need to reset counter or index error, as len(walkLefr/Right)=9 and img is to change every 3 frames @ 27 fps
+        walkCount = 0
+    if left :
+        win.blit(walkLeft[walkCount//3],(x,y))
+        walkCount += 1
+    elif right :
+        win.blit(walkRight[walkCount//3], (x,y))
+        walkCount += 1
+    else :
+        win.blit(char,(x,y))
+        walkCount = 0
+
     pygame.display.update()
 
 #mainloop 
@@ -41,12 +52,20 @@ while run :
     keys = pygame.key.get_pressed()
 
     if keys[pygame.K_LEFT] and x > 0:
-        x -= v        
-    if keys[pygame.K_RIGHT] and x < screen_W - w:
+        x -= v   
+        left = True
+        right = False     
+    elif keys[pygame.K_RIGHT] and x < screen_W - w:
         x += v 
+        left = False
+        right = True
+    else :              # if neither left nor right key pressed - stand still and reset walkCount
+        left = False
+        right = False
+        walkCount = 0 
     if not isJump :     # up, down and new jump will be suspended while previous jump lasts
         if keys[pygame.K_SPACE] :
-            isJump = True
+            isJump = True  # he is adding here keft = right = False & reset walk count
     else :
         if jumpCount >= -10 :
             if jumpCount >= 0 :
