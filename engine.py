@@ -3,20 +3,34 @@ pygame.init()
 pygame.display.set_caption("The GAME.")
 
 # All global vars
-screen_W = 400
-screen_H = 400
+screen_W = 850
+screen_H = 480
 win = pygame.display.set_mode((screen_W, screen_H))
 
-x = 40      # initial position (x,y)         (0,0)------->
-y = 380     #                                     |      X
-h = 20      #                                     |
-w = 20      #                                     V Y             
-v = 10      # if starting pos(x,y) is not integer-divisble by 'step"' size v, character may partially disappear from screen
+bg = pygame.image.load('bg.jpg')
+char =pygame.image.load('standing.png')
+walkLeft =  [pygame.image.load('L1.png'),pygame.image.load('L2.png'),pygame.image.load('L3.png'),pygame.image.load('L4.png'),pygame.image.load('L5.png'),pygame.image.load('L6.png'),pygame.image.load('L7.png'),pygame.image.load('L8.png'),pygame.image.load('L9.png')]
+walkRight = [pygame.image.load('R1.png'),pygame.image.load('R2.png'),pygame.image.load('R3.png'),pygame.image.load('R4.png'),pygame.image.load('R5.png'),pygame.image.load('R6.png'),pygame.image.load('R7.png'),pygame.image.load('R8.png'),pygame.image.load('R9.png')]
 
-run = True
+w = 64                # initial position (x,y)         (0,0)------->
+h = 64                #                                     |      X
+x = 40                #                                     |
+y = screen_H - h      #                                     V Y             
+v = 10                # if starting pos(x,y) is not integer-divisble by 'step"' size v, character may partially disappear from screen
 isJump = False
-jumpCount = 10    # jump will be animated in 10 frames up and 10 frames back down, if you want to change it the 10 is hardcoded in jump loop too
+jumpCount = 10       # jump will be animated in 10 frames up and 10 frames back down, if you want to change it the 10 is hardcoded in jump loop too
+left = False         # these 3 vars will keep track of which way and how many steps is the character walking, for accurate image insertions
+right = False
+walkCount = 0 
 
+def redrawGameWin() :
+    global walkCount
+    win.blit(bg, (0,0))
+    pygame.draw.rect(win, (255,0,0), (x,y,w,h))
+    pygame.display.update()
+
+#mainloop 
+run = True
 while run :
     pygame.time.delay(50)
 
@@ -44,9 +58,7 @@ while run :
             isJump = False
             jumpCount = 10 
 
+    redrawGameWin()
 
-    win.fill((0,0,0))
-    pygame.draw.rect(win, (255,0,0), (x,y,w,h))
-    pygame.display.update()
 
 pygame.quit()
