@@ -31,10 +31,6 @@ while run :
     if keys[pygame.K_RIGHT] and x < screen_W - w:
         x += v 
     if not isJump :     # up, down and new jump will be suspended while previous jump lasts
-        if keys[pygame.K_UP] and y > 0 :    
-            y -= v
-        if keys[pygame.K_DOWN] and y < screen_H - h :
-            y += v
         if keys[pygame.K_SPACE] :
             isJump = True
     else :
