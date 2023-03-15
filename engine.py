@@ -27,6 +27,7 @@ class player(object) :
         self.right = False
         self.walkCount = 0 
         self.standing = True
+        self.hitbox = (self.x+18, self.y+14, 26, 50)    # you can draw hitbox around populated pixels in characters' sprites visually check how it fits.
 
     def draw(self, win) :
         if self.walkCount + 1 >= 27 :        # every 27 steps reset counter or risk index error, as len(self.walkLeft/Right)=9 and img is to change every 3 frames @ 27 fps
@@ -48,6 +49,8 @@ class player(object) :
                 win.blit(self.walkRight[self.walkCount//3], (self.x,self.y))
             else :              # this will blit our thug facing screen if both self.left/right are false, which is the case only at the beginning of the game, any other time he stops, we will be facing in the last direction that he walked
                 win.blit(char,(self.x,self.y))
+        self.hitbox = (self.x+18, self.y+14, 26, 50)        # update hitbox's position (as dimension stay the same, 26x50)
+        pygame.draw.rect(win, (255,0,0), self.hitbox, 2)
 
 class enemy(object) : 
     walkLeft =  [pygame.image.load('sprites/L1E.png'),pygame.image.load('sprites/L2E.png'),pygame.image.load('sprites/L3E.png'),pygame.image.load('sprites/L4E.png'),pygame.image.load('sprites/L5E.png'),pygame.image.load('sprites/L6E.png'),pygame.image.load('sprites/L7E.png'),pygame.image.load('sprites/L8E.png'),pygame.image.load('sprites/L9E.png'),pygame.image.load('sprites/L10E.png'),pygame.image.load('sprites/L11E.png')]
@@ -68,6 +71,7 @@ class enemy(object) :
         #self.right = False
         self.walkCount = 0 
         #self.standing = True
+        self.hitbox = (self.x+17, self.y+4, 31, 53)
 
     def draw(self, win) :
         self.move()
@@ -80,6 +84,8 @@ class enemy(object) :
         else :
             win.blit(self.walkRight[self.walkCount//3], (self.x,self.y))
             self.walkCount += 1
+        self.hitbox = (self.x+20, self.y+4, 28, 53)
+        pygame.draw.rect(win, (255,0,0), self.hitbox, 3)
 
     def move(self) :
         if self.v > 0 :
@@ -119,7 +125,7 @@ def redrawGameWin() :
 
 #mainloop 
 thug = player(64,64,40,screen_H - 64)
-alien = enemy(64,64,540,screen_H - 64,(50, 750))
+alien = enemy(64,64,540,screen_H - 57,(50, 750))
 run = True
 bullets = []          # so that multiple objects of projectile class can be on screen at the same time
 while run :
