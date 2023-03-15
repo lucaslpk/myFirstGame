@@ -6,10 +6,12 @@ pygame.display.set_caption("The GAME.")
 screen_W = 850
 screen_H = 480
 win = pygame.display.set_mode((screen_W, screen_H))
+clock = pygame.time.Clock()
+score = 0
 
 bg = pygame.image.load('sprites/bg.jpg')
 char =pygame.image.load('sprites/standing.png')
-clock = pygame.time.Clock()
+
 
 class player(object) : 
     walkLeft =  [pygame.image.load('sprites/L1.png'),pygame.image.load('sprites/L2.png'),pygame.image.load('sprites/L3.png'),pygame.image.load('sprites/L4.png'),pygame.image.load('sprites/L5.png'),pygame.image.load('sprites/L6.png'),pygame.image.load('sprites/L7.png'),pygame.image.load('sprites/L8.png'),pygame.image.load('sprites/L9.png')]
@@ -50,7 +52,6 @@ class player(object) :
             else :              # this will blit our thug facing screen if both self.left/right are false, which is the case only at the beginning of the game, any other time he stops, we will be facing in the last direction that he walked
                 win.blit(char,(self.x,self.y))
         self.hitbox = (self.x+18, self.y+14, 26, 50)        # update hitbox's position (as dimension stay the same, 26x50)
-        pygame.draw.rect(win, (255,0,0), self.hitbox, 2)
 
 class enemy(object) : 
     walkLeft =  [pygame.image.load('sprites/L1E.png'),pygame.image.load('sprites/L2E.png'),pygame.image.load('sprites/L3E.png'),pygame.image.load('sprites/L4E.png'),pygame.image.load('sprites/L5E.png'),pygame.image.load('sprites/L6E.png'),pygame.image.load('sprites/L7E.png'),pygame.image.load('sprites/L8E.png'),pygame.image.load('sprites/L9E.png'),pygame.image.load('sprites/L10E.png'),pygame.image.load('sprites/L11E.png')]
@@ -65,12 +66,7 @@ class enemy(object) :
         self.start = range[0]
         self.end = range[1]   
         self.path = [self.start, self.end]          # to keep track of where enemy is
-        #self.isJump = False
-        #self.jumpCount = 10      
-        #self.left = False        
-        #self.right = False
         self.walkCount = 0 
-        #self.standing = True
         self.hitbox = (self.x+17, self.y+4, 31, 53) # rec (x, y, w, h)
 
     def draw(self, win) :
@@ -85,7 +81,8 @@ class enemy(object) :
             win.blit(self.walkRight[self.walkCount//3], (self.x,self.y))
             self.walkCount += 1
         self.hitbox = (self.x+20, self.y+4, 28, 53)
-        pygame.draw.rect(win, (255,0,0), self.hitbox, 3)
+        pygame.draw.rect(win, (43,166,57), (self.x+20, self.y, 30 - score, 4))
+        pygame.draw.rect(win, (210,43,43), (self.x+50 - score, self.y, score, 4))
 
     def move(self) :
         if self.v > 0 :
@@ -120,6 +117,8 @@ class projectile() :
 
 def redrawGameWin() :
     win.blit(bg, (0,0))
+    text = font.render("Score: " + str(score), 1, (0,0,0))
+    win.blit(text, (650,25))
     thug.draw(win)
     alien.draw(win)
     for bullet in bullets :
@@ -127,6 +126,7 @@ def redrawGameWin() :
     pygame.display.update()
 
 #mainloop 
+font = pygame.font.SysFont('comicsans', 30, True)
 thug = player(64,64,40,screen_H - 64)
 alien = enemy(64,64,540,screen_H - 57,(50, 750))
 run = True
@@ -145,9 +145,10 @@ while run :
         if bullet.y - bullet.radius > alien.hitbox[1] and bullet.y + bullet.radius < alien.hitbox[1] + alien.hitbox[3] : # checks if bulet is vertically within goblin hitbox rec range
             if bullet.x + bullet.radius > alien.hitbox[0] and bullet.x - bullet.radius < alien.hitbox[0] + alien.hitbox[2] : # checks if bullet is horizontally within hitbox
                 alien.hit()     # alien is only hit if the full diameter of the bullet is inside his hitbox, in both directions (check 2 above coniditionals carefully)
+                score +=1
                 bullets.pop(bullets.index(bullet))          # if bullet hit target remove it from the list
         if bullet.x > 0 and bullet.x < screen_W :           # if the bullet is on screen (only checks horizontal here)
-            bullet.x += bullet.v                            # move the bullet one frame every tiem while mainloop runs
+            bullet.x += bullet.v                            # move the bullet one frame every time while mainloop runs
         else:                                               # if off screen
             bullets.pop(bullets.index(bullet))              # remove from list ==> list.pop()
 
