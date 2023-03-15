@@ -13,35 +13,40 @@ walkLeft =  [pygame.image.load('L1.png'),pygame.image.load('L2.png'),pygame.imag
 walkRight = [pygame.image.load('R1.png'),pygame.image.load('R2.png'),pygame.image.load('R3.png'),pygame.image.load('R4.png'),pygame.image.load('R5.png'),pygame.image.load('R6.png'),pygame.image.load('R7.png'),pygame.image.load('R8.png'),pygame.image.load('R9.png')]
 clock = pygame.time.Clock()
 
-w = 64                # initial position (x,y)         (0,0)------->
-h = 64                #                                     |      X
-x = 40                #                                     |
-y = screen_H - h      #                                     V Y             
-v = 3                # if starting pos(x,y) is not integer-divisble by 'step"' size v, character may partially disappear from screen
-isJump = False
-jumpCount = 10       # jump will be animated in 10 frames up and 10 frames back down, if you want to change it the 10 is hardcoded in jump loop too
-left = False         # these 3 vars will keep track of which way and how many steps is the character walking, for accurate image insertions
-right = False
-walkCount = 0 
+class player(object) : # need to read more and understand why is there an object argument here?
+    def __init__(self, w,h,x,y) -> None:
+        self.w = w      # initial position (x,y)         (0,0)------->
+        self.h = h      #                                     |      X
+        self.x = x      #                                     |
+        self.y = y      #                                     V Y  
+        self.v = 3                # if starting pos(x,y) is not integer-divisble by "step's" size v, character may partially disappear from screen
+        self.isJump = False
+        self.jumpCount = 10       # jump will be animated in 10 frames up and 10 frames back down, if you want to change it the 10 is hardcoded in jump loop too
+        self.left = False         # these 3 vars will keep track of which way and how many steps is the character walking, for accurate image insertions
+        self.right = False
+        self.walkCount = 0 
+
+    def draw(self, win) :
+        if self.walkCount + 1 >= 27 :        # every 27 steps reset counter or risk index error, as len(walkLeft/Right)=9 and img is to change every 3 frames @ 27 fps
+            self.walkCount = 0
+        if self.left :
+            win.blit(walkLeft[self.walkCount//3],(self.x,self.y))
+            self.walkCount += 1
+        elif self.right :
+            win.blit(walkRight[self.walkCount//3], (self.x,self.y))
+            self.walkCount += 1
+        else :
+            win.blit(char,(self.x,self.y))
+            self.walkCount = 0
 
 def redrawGameWin() :
-    global walkCount
     win.blit(bg, (0,0))
-    if walkCount + 1 >= 27 :        # every 27 steps need to reset counter or index error, as len(walkLefr/Right)=9 and img is to change every 3 frames @ 27 fps
-        walkCount = 0
-    if left :
-        win.blit(walkLeft[walkCount//3],(x,y))
-        walkCount += 1
-    elif right :
-        win.blit(walkRight[walkCount//3], (x,y))
-        walkCount += 1
-    else :
-        win.blit(char,(x,y))
-        walkCount = 0
+    thug.draw(win)
 
     pygame.display.update()
 
 #mainloop 
+thug = player(64,64,40,screen_H - 64)
 run = True
 while run :
     clock.tick(27)    # FPS from clock instance of pygame.time.Clock class 
@@ -52,31 +57,31 @@ while run :
 
     keys = pygame.key.get_pressed()
 
-    if keys[pygame.K_LEFT] and x > 0:
-        x -= v   
-        left = True
-        right = False     
-    elif keys[pygame.K_RIGHT] and x < screen_W - w:
-        x += v 
-        left = False
-        right = True
+    if keys[pygame.K_LEFT] and thug.x > 0:
+        thug.x -= thug.v   
+        thug.left = True
+        thug.right = False     
+    elif keys[pygame.K_RIGHT] and thug.x < screen_W - thug.w:
+        thug.x += thug.v 
+        thug.left = False
+        thug.right = True
     else :              # if neither left nor right key pressed - stand still and reset walkCount
-        left = False
-        right = False
-        walkCount = 0 
-    if not isJump :     # up, down and new jump will be suspended while previous jump lasts
+        thug.left = False
+        thug.right = False
+        thug.walkCount = 0 
+    if not thug.isJump :     # up, down and new jump will be suspended while previous jump lasts
         if keys[pygame.K_SPACE] :
-            isJump = True  # he is adding here keft = right = False & reset walk count
+            thug.isJump = True  # TwTim is adding here left = right = False & reset walk count so the thug doesn't move feet while in the air
     else :
-        if jumpCount >= -10 :
-            if jumpCount >= 0 :
-                y -= (jumpCount ** 2) * 0.5     # up we go!!
+        if thug.jumpCount >= -10 :
+            if thug.jumpCount >= 0 :
+                thug.y -= (thug.jumpCount ** 2) * 0.5     # up we go!!
             else :
-                y += (jumpCount ** 2) * 0.5     # what goes up - must come down...
-            jumpCount -= 1
+                thug.y += (thug.jumpCount ** 2) * 0.5     # what goes up - must come down...
+            thug.jumpCount -= 1
         else :
-            isJump = False
-            jumpCount = 10 
+            thug.isJump = False
+            thug.jumpCount = 10 
 
     redrawGameWin()
 
