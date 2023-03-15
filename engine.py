@@ -7,10 +7,13 @@ screen_W = 850
 screen_H = 480
 win = pygame.display.set_mode((screen_W, screen_H))
 clock = pygame.time.Clock()
-bulletSound = pygame.mixer.Sound('Game_bullet.wav')
-hitSound = pygame.mixer.Sound('Game_hit.wav')
-music = pygame.mixer.music.load('Game_music.mp3')
-pygame.mixer.music.play(-1)
+bulletSound = pygame.mixer.Sound('sounds/Game_bullet.wav')
+hitSound = pygame.mixer.Sound('sounds/Game_hit.wav')
+punchedSound = pygame.mixer.Sound('sounds/Game_punched.wav')
+respawnSound = pygame.mixer.Sound('sounds/Game_respawn.wav')
+killedSound = pygame.mixer.Sound('sounds/Game_killed.wav')
+music = pygame.mixer.music.load('sounds/Game_music.mp3')
+#pygame.mixer.music.play(-1)
 score = 0
 
 bg = pygame.image.load('sprites/bg.jpg')
@@ -74,6 +77,7 @@ class enemy(object) :
         self.hitbox = (self.x+17, self.y+4, 31, 53) # rec (x, y, w, h)
         self.hitsTaken = 0
         self.visible = True
+        respawnSound.play()
 
     def draw(self, win) :
         if self.visible :
@@ -108,10 +112,12 @@ class enemy(object) :
                 self.walkCount = 0 
 
     def hit(self) :
-        self.hitsTaken += 1
+        self.hitsTaken += 1        
         if self.hitsTaken > 30 :
             self.visible = False
-        hitSound.play()
+            killedSound.play()
+        else :
+            hitSound.play()
 
 class projectile() :
     def __init__(self,x,y,radius,color, facing) -> None:
