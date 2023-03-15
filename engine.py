@@ -68,21 +68,24 @@ class enemy(object) :
         self.path = [self.start, self.end]          # to keep track of where enemy is
         self.walkCount = 0 
         self.hitbox = (self.x+17, self.y+4, 31, 53) # rec (x, y, w, h)
+        self.hitsTaken = 0
+        self.visible = True
 
     def draw(self, win) :
-        self.move()
-        if self.walkCount + 1 >= 33 :        # every 33 steps reset counter because we got set of 22 sprites = 11 in each direction, sprite change every 3 frames
-            self.walkCount = 0
+        if self.visible :
+            self.move()
+            if self.walkCount + 1 >= 33 :        # every 33 steps reset counter because we got set of 22 sprites = 11 in each direction, sprite change every 3 frames
+                self.walkCount = 0
 
-        if self.v < 0 :                      # enemy has a velocity negative or positive, so we don't need self.left/right booleans - sprawdź czy da się uprościć playera
-            win.blit(self.walkLeft[self.walkCount//3], (self.x,self.y))
-            self.walkCount += 1
-        else :
-            win.blit(self.walkRight[self.walkCount//3], (self.x,self.y))
-            self.walkCount += 1
-        self.hitbox = (self.x+20, self.y+4, 28, 53)
-        pygame.draw.rect(win, (43,166,57), (self.x+20, self.y, 30 - score, 4))
-        pygame.draw.rect(win, (210,43,43), (self.x+50 - score, self.y, score, 4))
+            if self.v < 0 :                      # enemy has a velocity negative or positive, so we don't need self.left/right booleans - sprawdź czy da się uprościć playera
+                win.blit(self.walkLeft[self.walkCount//3], (self.x,self.y))
+                self.walkCount += 1
+            else :
+                win.blit(self.walkRight[self.walkCount//3], (self.x,self.y))
+                self.walkCount += 1
+            self.hitbox = (self.x+20, self.y+4, 28, 53)
+            pygame.draw.rect(win, (43,166,57), (self.x+20, self.y, 30 - self.hitsTaken, 4))
+            pygame.draw.rect(win, (210,43,43), (self.x+50 - self.hitsTaken, self.y, self.hitsTaken, 4))
 
     def move(self) :
         if self.v > 0 :
@@ -101,6 +104,9 @@ class enemy(object) :
                 self.walkCount = 0 
 
     def hit(self) :
+        self.hitsTaken += 1
+        if self.hitsTaken > 30 :
+            self.visible = False
         print("Alien HIT!")
 
 class projectile() :
@@ -145,7 +151,7 @@ while run :
         if bullet.y - bullet.radius > alien.hitbox[1] and bullet.y + bullet.radius < alien.hitbox[1] + alien.hitbox[3] : # checks if bulet is vertically within goblin hitbox rec range
             if bullet.x + bullet.radius > alien.hitbox[0] and bullet.x - bullet.radius < alien.hitbox[0] + alien.hitbox[2] : # checks if bullet is horizontally within hitbox
                 alien.hit()     # alien is only hit if the full diameter of the bullet is inside his hitbox, in both directions (check 2 above coniditionals carefully)
-                score +=1
+                score +=1                
                 bullets.pop(bullets.index(bullet))          # if bullet hit target remove it from the list
         if bullet.x > 0 and bullet.x < screen_W :           # if the bullet is on screen (only checks horizontal here)
             bullet.x += bullet.v                            # move the bullet one frame every time while mainloop runs
