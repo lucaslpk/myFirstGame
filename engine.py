@@ -7,6 +7,10 @@ screen_W = 850
 screen_H = 480
 win = pygame.display.set_mode((screen_W, screen_H))
 clock = pygame.time.Clock()
+bulletSound = pygame.mixer.Sound('Game_bullet.wav')
+hitSound = pygame.mixer.Sound('Game_hit.wav')
+music = pygame.mixer.music.load('Game_music.mp3')
+pygame.mixer.music.play(-1)
 score = 0
 
 bg = pygame.image.load('sprites/bg.jpg')
@@ -107,7 +111,7 @@ class enemy(object) :
         self.hitsTaken += 1
         if self.hitsTaken > 30 :
             self.visible = False
-        print("Alien HIT!")
+        hitSound.play()
 
 class projectile() :
     def __init__(self,x,y,radius,color, facing) -> None:
@@ -117,6 +121,7 @@ class projectile() :
         self.color = color 
         self.facing = facing    # facing Left/Right will be coded as -1 or 1
         self.v = 15 * facing    # so that the velocity will be a vector and will have and orientation (+/-)
+        bulletSound.play()
 
     def draw(self, win) :
         pygame.draw.circle(win, self.color, (self.x, self.y), self.radius)   # jedynka jest żeby nie był wypełniony, puste dla pełny - zobaczymy
