@@ -131,8 +131,11 @@ thug = player(64,64,40,screen_H - 64)
 alien = enemy(64,64,540,screen_H - 57,(50, 750))
 run = True
 bullets = []          # so that multiple objects of projectile class can be on screen at the same time
+shootingCoolOff = 0
 while run :
     clock.tick(27)    # FPS from clock instance of pygame.time.Clock class 
+    if shootingCoolOff > 0 :
+        shootingCoolOff -= 1
 
     for event in pygame.event.get() :
         if event.type == pygame.QUIT :
@@ -150,7 +153,7 @@ while run :
 
     keys = pygame.key.get_pressed()
 
-    if keys[pygame.K_SPACE] :
+    if keys[pygame.K_SPACE] and shootingCoolOff == 0 :
         facing = 0                                      # facing was defined in if/elif branches, so if thug was facing forward = error
         if thug.left :
             facing = -1
@@ -158,6 +161,7 @@ while run :
             facing = 1    
         if len(bullets) < 15 and facing in(-1, 1):       # max 15 bullets at the same time and can't shoot if facing forward
             bullets.append(projectile(round(thug.x + thug.w//2), round(thug.y +thug.h//2), 5, (255,0,0), facing))
+            shootingCoolOff = 9 
     if keys[pygame.K_LEFT] and thug.x > 0:
         thug.x -= thug.v   
         thug.left = True
