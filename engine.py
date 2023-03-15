@@ -9,11 +9,12 @@ win = pygame.display.set_mode((screen_W, screen_H))
 
 bg = pygame.image.load('sprites/bg.jpg')
 char =pygame.image.load('sprites/standing.png')
-walkLeft =  [pygame.image.load('sprites/L1.png'),pygame.image.load('sprites/L2.png'),pygame.image.load('sprites/L3.png'),pygame.image.load('sprites/L4.png'),pygame.image.load('sprites/L5.png'),pygame.image.load('sprites/L6.png'),pygame.image.load('sprites/L7.png'),pygame.image.load('sprites/L8.png'),pygame.image.load('sprites/L9.png')]
-walkRight = [pygame.image.load('sprites/R1.png'),pygame.image.load('sprites/R2.png'),pygame.image.load('sprites/R3.png'),pygame.image.load('sprites/R4.png'),pygame.image.load('sprites/R5.png'),pygame.image.load('sprites/R6.png'),pygame.image.load('sprites/R7.png'),pygame.image.load('sprites/R8.png'),pygame.image.load('sprites/R9.png')]
 clock = pygame.time.Clock()
 
 class player(object) : 
+    walkLeft =  [pygame.image.load('sprites/L1.png'),pygame.image.load('sprites/L2.png'),pygame.image.load('sprites/L3.png'),pygame.image.load('sprites/L4.png'),pygame.image.load('sprites/L5.png'),pygame.image.load('sprites/L6.png'),pygame.image.load('sprites/L7.png'),pygame.image.load('sprites/L8.png'),pygame.image.load('sprites/L9.png')]
+    walkRight = [pygame.image.load('sprites/R1.png'),pygame.image.load('sprites/R2.png'),pygame.image.load('sprites/R3.png'),pygame.image.load('sprites/R4.png'),pygame.image.load('sprites/R5.png'),pygame.image.load('sprites/R6.png'),pygame.image.load('sprites/R7.png'),pygame.image.load('sprites/R8.png'),pygame.image.load('sprites/R9.png')]
+
     def __init__(self, w,h,x,y) -> None:
         self.w = w      # initial position (x,y)         (0,0)------->
         self.h = h      #                                     |      X
@@ -28,23 +29,23 @@ class player(object) :
         self.standing = True
 
     def draw(self, win) :
-        if self.walkCount + 1 >= 27 :        # every 27 steps reset counter or risk index error, as len(walkLeft/Right)=9 and img is to change every 3 frames @ 27 fps
+        if self.walkCount + 1 >= 27 :        # every 27 steps reset counter or risk index error, as len(self.walkLeft/Right)=9 and img is to change every 3 frames @ 27 fps
             self.walkCount = 0
 
         if not(self.standing) :
             if self.left :
-                win.blit(walkLeft[self.walkCount//3], (self.x,self.y))
+                win.blit(self.walkLeft[self.walkCount//3], (self.x,self.y))
                 self.walkCount += 1
             elif self.right :
-                win.blit(walkRight[self.walkCount//3], (self.x,self.y))
+                win.blit(self.walkRight[self.walkCount//3], (self.x,self.y))
                 self.walkCount += 1
 
         else :
             self.walkCount = 0      # so that frame No 0 is blit when standing w/o hardcoding 0 in the procedures below
             if self.left :
-                win.blit(walkLeft[self.walkCount//3],(self.x,self.y))       # same procedures as above, for consistency
+                win.blit(self.walkLeft[self.walkCount//3],(self.x,self.y))       # same procedures as above, for consistency
             elif self.right :
-                win.blit(walkRight[self.walkCount//3], (self.x,self.y))
+                win.blit(self.walkRight[self.walkCount//3], (self.x,self.y))
             else :              # this will blit our thug facing screen if both self.left/right are false, which is the case only at the beginning of the game, any other time he stops, we will be facing in the last direction that he walked
                 win.blit(char,(self.x,self.y))
 
@@ -164,9 +165,9 @@ while run :
     else :
         if thug.jumpCount >= -10 :
             if thug.jumpCount >= 0 :
-                thug.y -= (thug.jumpCount ** 2) * 0.5     # up we go!!
+                thug.y -= (thug.jumpCount ** 2) * 0.25     # up we go!!
             else :
-                thug.y += (thug.jumpCount ** 2) * 0.5     # what goes up - must come down...
+                thug.y += (thug.jumpCount ** 2) * 0.25     # what goes up - must come down...
             thug.jumpCount -= 1
         else :
             thug.isJump = False
