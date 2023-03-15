@@ -71,7 +71,7 @@ class enemy(object) :
         #self.right = False
         self.walkCount = 0 
         #self.standing = True
-        self.hitbox = (self.x+17, self.y+4, 31, 53)
+        self.hitbox = (self.x+17, self.y+4, 31, 53) # rec (x, y, w, h)
 
     def draw(self, win) :
         self.move()
@@ -100,8 +100,11 @@ class enemy(object) :
                 self.x += self.v                   
                 self.walkCount += 1
             else :                                
-                self.v *= -1                      # powtarzamy tu 2 razy to samom zastanów się czy nie mozna tego skompaktowac
+                self.v *= -1                      # powtarzamy tu 2 razy to samo zastanów się czy nie mozna tego skompaktowac
                 self.walkCount = 0 
+
+    def hit(self) :
+        print("Alien HIT!")
 
 class projectile() :
     def __init__(self,x,y,radius,color, facing) -> None:
@@ -136,10 +139,14 @@ while run :
             run = False
 
     for bullet in bullets :                                 # for every bullet in bullets list
+        if bullet.y - bullet.radius > alien.hitbox[1] and bullet.y + bullet.radius < alien.hitbox[1] + alien.hitbox[3] : # checks if bulet is vertically within goblin hitbox rec range
+            if bullet.x + bullet.radius > alien.hitbox[0] and bullet.x - bullet.radius < alien.hitbox[0] + alien.hitbox[2] : # checks if bullet is horizontally within hitbox
+                alien.hit()     # alien is only hit if the full diameter of the bullet is inside his hitbox, in both directions (check 2 above coniditionals carefully)
+                bullets.pop(bullets.index(bullet))          # if bullet hit target remove it from the list
         if bullet.x > 0 and bullet.x < screen_W :           # if the bullet is on screen (only checks horizontal here)
             bullet.x += bullet.v                            # move the bullet one frame every tiem while mainloop runs
         else:                                               # if off screen
-            bullets.pop(bullets.index(bullet))              # remove from list ==> pop()
+            bullets.pop(bullets.index(bullet))              # remove from list ==> list.pop()
 
     keys = pygame.key.get_pressed()
 
