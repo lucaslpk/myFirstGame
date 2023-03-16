@@ -12,7 +12,7 @@ clock = pygame.time.Clock()
 font1 = pygame.font.SysFont('comicsans', 30, True)
 font2 = pygame.font.SysFont('arial', 60, True)
 score = 0
-enemyCount = 1
+enemyCount = 3
 
 # All Sounds
 bulletSound = pygame.mixer.Sound('sounds/Game_bullet.wav')
@@ -95,6 +95,12 @@ class enemy(object) :
         self.hitsTaken = 0
         self.killed = False
         respawnSound.play()
+        self.landing()
+
+    def landing(self) :
+        global ufo 
+        print("I am landing!")
+        ufo = saucer(-330,160)
 
     def draw(self, win) :
         if not self.killed :
@@ -136,6 +142,42 @@ class enemy(object) :
         else :
             hitSound.play()
 
+class saucer(object) :
+    beamOff = pygame.image.load('sprites/Saucer-no-beam320.png')
+    beamOn = pygame.image.load('sprites/Saucer320.png')
+               
+    def __init__(self,x, y) -> None:
+        self.x = x     
+        self.y = y
+        self.v = 20 
+        self.beam = False
+        self.timer = 4 * 27   # 4s @ 27 FPS, 
+
+    def move(self) :
+        
+        if self.v != 0 :
+            self.x += self.v
+        if ufoLandingX - self.x < 560 and self.v != 0 :   # in order to stop in the right place ufo needs to start slowing down @560 distance, slow down by 0.5 per frame. Exact stopping point also depends on original insertion point (here -330) and integer division by initial velocity
+            self.v = self.v - 0.5
+        if self.x == ufoLandingX - 160 :
+            self.timer -=1
+            if self.timer <= 3 * 27 :
+                self.beam = True
+            if self.timer < 2 * 27 :
+                pass   #here is permision to land
+            if self.timer < 1 * 27 :
+                self.beam = False
+            if self.timer < 0 * 27 :
+                self.v -= 0.5
+
+
+    def draw(self, win) :
+        self.move()
+        if self.beam :
+            win.blit(self.beamOn, (self.x,self.y))
+        else :
+            win.blit(self.beamOff, (self.x,self.y))
+
 class projectile() :
     def __init__(self,x,y,radius,color, facing) -> None:
         self.radius = radius
@@ -154,18 +196,20 @@ def redrawGameWin() :
     text = font1.render("Score: " + str(score), 1, (0,0,0))
     win.blit(text, (650,25))
     thug.draw(win)
+    ufo.draw(win)
     for alien in aliens :
         alien.draw(win)
     for bullet in bullets :
         bullet.draw(win)
-    if len(aliens) == 0 :
-        text = font2.render("   YOU WON!!!   ", 1, (237,225,34), (0,0,255))
-        win.blit(text, (screen_W//2 - text.get_width() //2, screen_H //2 - text.get_height()//2))
+    # if len(aliens) == 0 :
+    #     text = font2.render("   YOU WON!!!   ", 1, (237,225,34), (0,0,255))
+    #     win.blit(text, (screen_W//2 - text.get_width() //2, screen_H //2 - text.get_height()//2))
     pygame.display.update()
 
 # Mainloop 
 # vars to initilize at start
 thug = player(64,64,40,screen_H - 64)
+ufoLandingX = 540
 aliens = []
 respawnCoolOff = 0
 bullets = []          # so that multiple objects of projectile class can be on screen at the same time
@@ -180,18 +224,19 @@ while run :
     if respawnCoolOff > 0 :
         respawnCoolOff -= 1
     else :
-        if len(aliens) < 1 and enemyCount > 0:
-            aliens.append(enemy(64,64,540,screen_H - 57,(50, 736)))   
-            respawnCoolOff = 81  
+        if len(aliens) < 3 and enemyCount > 0:
+            #ufo = saucer(-330,160)
+            aliens.append(enemy(64,64,ufoLandingX,screen_H - 57,(50, 736)))   
+            respawnCoolOff = 8 * 27 # 8s @ 27 FPS  
 
     for event in pygame.event.get() :
         if event.type == pygame.QUIT :
             run = False
 
-    for alien in aliens :                                       # if there are no more aliens = no bullet animation = BUG
+    for alien in aliens :                                       # if there are no more aliens = no bullet animation = SERIOUS BUG
         if alien.killed :
             aliens.pop(aliens.index(alien))
-            respawnCoolOff = 81
+            respawnCoolOff = 3 * 27
             enemyCount -= 1
         for bullet in bullets :                                 # for every bullet in bullets list
             if bullet.y - bullet.radius > alien.hitbox[1] and bullet.y + bullet.radius < alien.hitbox[1] + alien.hitbox[3] : # checks if bulet is vertically within goblin hitbox rec range
