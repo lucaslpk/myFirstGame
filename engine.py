@@ -9,9 +9,10 @@ win = pygame.display.set_mode((screen_W, screen_H))
 bg = pygame.image.load('sprites/bg.jpg')
 char =pygame.image.load('sprites/standing.png')
 clock = pygame.time.Clock()
-
+font1 = pygame.font.SysFont('comicsans', 30, True)
+font2 = pygame.font.SysFont('arial', 60, True)
 score = 0
-enemyCount = 3
+enemyCount = 1
 
 # All Sounds
 bulletSound = pygame.mixer.Sound('sounds/Game_bullet.wav')
@@ -150,22 +151,25 @@ class projectile() :
 
 def redrawGameWin() :
     win.blit(bg, (0,0))
-    text = font.render("Score: " + str(score), 1, (0,0,0))
+    text = font1.render("Score: " + str(score), 1, (0,0,0))
     win.blit(text, (650,25))
     thug.draw(win)
     for alien in aliens :
         alien.draw(win)
     for bullet in bullets :
         bullet.draw(win)
+    if len(aliens) == 0 :
+        text = font2.render("   YOU WON!!!   ", 1, (237,225,34), (0,0,255))
+        win.blit(text, (screen_W//2 - text.get_width() //2, screen_H //2 - text.get_height()//2))
     pygame.display.update()
 
 # Mainloop 
-font = pygame.font.SysFont('comicsans', 30, True)
+# vars to initilize at start
 thug = player(64,64,40,screen_H - 64)
 aliens = []
 respawnCoolOff = 0
-run = True
 bullets = []          # so that multiple objects of projectile class can be on screen at the same time
+run = True
 
 while run :
     clock.tick(27)    # FPS from clock instance of pygame.time.Clock class 
@@ -176,7 +180,7 @@ while run :
     if respawnCoolOff > 0 :
         respawnCoolOff -= 1
     else :
-        if len(aliens) < enemyCount :
+        if len(aliens) < 1 and enemyCount > 0:
             aliens.append(enemy(64,64,540,screen_H - 57,(50, 736)))   
             respawnCoolOff = 81  
 
@@ -188,6 +192,7 @@ while run :
         if alien.killed :
             aliens.pop(aliens.index(alien))
             respawnCoolOff = 81
+            enemyCount -= 1
         for bullet in bullets :                                 # for every bullet in bullets list
             if bullet.y - bullet.radius > alien.hitbox[1] and bullet.y + bullet.radius < alien.hitbox[1] + alien.hitbox[3] : # checks if bulet is vertically within goblin hitbox rec range
                 if bullet.x + bullet.radius > alien.hitbox[0] and bullet.x - bullet.radius < alien.hitbox[0] + alien.hitbox[2] : # checks if bullet is horizontally within hitbox
