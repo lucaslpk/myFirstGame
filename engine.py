@@ -36,7 +36,9 @@ class player(object) :
         self.right = False
         self.walkCount = 0 
         self.standing = True
-        self.hitbox = (self.x+18, self.y+14, 26, 50)    # you can draw hitbox around populated pixels in characters' sprites visually check how it fits.
+        self.hitbox = (self.x+18, self.y+14, 26, 50)    # you can draw hitbox around populated pixels in characters' sprites to visually check how it fits.
+        self.isPunched = False
+        self.punchesTaken = 0
 
     def draw(self, win) :
         if self.walkCount + 1 >= 27 :        # every 27 steps reset counter or risk index error, as len(self.walkLeft/Right)=9 and img is to change every 3 frames @ 27 fps
@@ -59,6 +61,16 @@ class player(object) :
             else :              # this will blit our thug facing screen if both self.left/right are false, which is the case only at the beginning of the game, any other time he stops, we will be facing in the last direction that he walked
                 win.blit(char,(self.x,self.y))
         self.hitbox = (self.x+18, self.y+14, 26, 50)        # update hitbox's position (as dimension stay the same, 26x50)
+        pygame.draw.rect(win, (43,166,57), (self.x+20, self.y+7, 30 - self.punchesTaken*3, 4))
+        pygame.draw.rect(win, (210,43,43), (self.x+50 - self.punchesTaken*3, self.y+7, self.punchesTaken*3, 4))
+    
+    def punched(self) :
+        self.punchesTaken += 1  
+        if self.punchesTaken > 10 :
+                #self.visible = False   we will see if we disaapear thug after he's killed
+                killedSound.play()
+        else :
+            punchedSound.play()
 
 class enemy(object) : 
     walkLeft =  [pygame.image.load('sprites/L1E.png'),pygame.image.load('sprites/L2E.png'),pygame.image.load('sprites/L3E.png'),pygame.image.load('sprites/L4E.png'),pygame.image.load('sprites/L5E.png'),pygame.image.load('sprites/L6E.png'),pygame.image.load('sprites/L7E.png'),pygame.image.load('sprites/L8E.png'),pygame.image.load('sprites/L9E.png'),pygame.image.load('sprites/L10E.png'),pygame.image.load('sprites/L11E.png')]
@@ -171,6 +183,12 @@ while run :
 
     keys = pygame.key.get_pressed()
 
+    if not thug.isPunched :
+        if thug.hitbox[1] + thug.hitbox[3] > alien.hitbox[1] + alien.hitbox[3]//2 : # vertical collision is when bottom of thug's hitbox is below center af alien's hitbox, which is where his punching hand is
+            if thug.hitbox[0] + thug.hitbox[2] > alien.hitbox[0] and thug.hitbox[0] < alien.hitbox[0] + alien.hitbox[2] :
+                thug.isPunched = True
+                thug.punched()
+
     if keys[pygame.K_SPACE] and shootingCoolOff == 0 :
         facing = 0                                      # facing was defined in if/elif branches, so if thug was facing forward = error
         if thug.left :
@@ -180,7 +198,8 @@ while run :
         if len(bullets) < 15 and facing in(-1, 1):       # max 15 bullets at the same time and can't shoot if facing forward
             bullets.append(projectile(round(thug.x + thug.w//2), round(thug.y +thug.h//2), 5, (255,0,0), facing))
             shootingCoolOff = 9 
-    if keys[pygame.K_LEFT] and thug.x > 0:
+
+    if keys[pygame.K_LEFT] and thug.x > 0 :
         thug.x -= thug.v   
         thug.left = True
         thug.right = False  
