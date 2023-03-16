@@ -37,8 +37,9 @@ class player(object) :
         self.walkCount = 0 
         self.standing = True
         self.hitbox = (self.x+18, self.y+14, 26, 50)    # you can draw hitbox around populated pixels in characters' sprites to visually check how it fits.
-        self.isPunched = False
+        self.punchedCoolOff = 0
         self.punchesTaken = 0
+        self.shootingCoolOff = 0
 
     def draw(self, win) :
         if self.walkCount + 1 >= 27 :        # every 27 steps reset counter or risk index error, as len(self.walkLeft/Right)=9 and img is to change every 3 frames @ 27 fps
@@ -160,11 +161,13 @@ thug = player(64,64,40,screen_H - 64)
 alien = enemy(64,64,540,screen_H - 57,(50, 750))
 run = True
 bullets = []          # so that multiple objects of projectile class can be on screen at the same time
-shootingCoolOff = 0
+
 while run :
     clock.tick(27)    # FPS from clock instance of pygame.time.Clock class 
-    if shootingCoolOff > 0 :
-        shootingCoolOff -= 1
+    if thug.shootingCoolOff > 0 :
+        thug.shootingCoolOff -= 1
+    if thug.punchedCoolOff > 0 :
+        thug.punchedCoolOff -= 1
 
     for event in pygame.event.get() :
         if event.type == pygame.QUIT :
@@ -183,13 +186,13 @@ while run :
 
     keys = pygame.key.get_pressed()
 
-    if not thug.isPunched :
+    if thug.punchedCoolOff == 0 :
         if thug.hitbox[1] + thug.hitbox[3] > alien.hitbox[1] + alien.hitbox[3]//2 : # vertical collision is when bottom of thug's hitbox is below center af alien's hitbox, which is where his punching hand is
             if thug.hitbox[0] + thug.hitbox[2] > alien.hitbox[0] and thug.hitbox[0] < alien.hitbox[0] + alien.hitbox[2] :
-                thug.isPunched = True
+                thug.punchedCoolOff = 27
                 thug.punched()
 
-    if keys[pygame.K_SPACE] and shootingCoolOff == 0 :
+    if keys[pygame.K_SPACE] and thug.shootingCoolOff == 0 :
         facing = 0                                      # facing was defined in if/elif branches, so if thug was facing forward = error
         if thug.left :
             facing = -1
@@ -197,7 +200,7 @@ while run :
             facing = 1    
         if len(bullets) < 15 and facing in(-1, 1):       # max 15 bullets at the same time and can't shoot if facing forward
             bullets.append(projectile(round(thug.x + thug.w//2), round(thug.y +thug.h//2), 5, (255,0,0), facing))
-            shootingCoolOff = 9 
+            thug.shootingCoolOff = 9 
 
     if keys[pygame.K_LEFT] and thug.x > 0 :
         thug.x -= thug.v   
@@ -211,6 +214,8 @@ while run :
         thug.standing = False
     else :              # if neither left nor right key pressed - stand still and reset walkCount 
         thug.standing = True
+        thug.left = False
+        thug.right = False
         thug.walkCount = 0 
     
     if not thug.isJump :     # up, down and new jump will be suspended while previous jump lasts Edit: up/down was removed, for platform game.
