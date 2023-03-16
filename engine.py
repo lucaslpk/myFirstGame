@@ -11,7 +11,7 @@ char =pygame.image.load('sprites/standing.png')
 clock = pygame.time.Clock()
 
 score = 0
-enemyCount = 1
+enemyCount = 3
 
 # All Sounds
 bulletSound = pygame.mixer.Sound('sounds/Game_bullet.wav')
@@ -163,6 +163,7 @@ def redrawGameWin() :
 font = pygame.font.SysFont('comicsans', 30, True)
 thug = player(64,64,40,screen_H - 64)
 aliens = []
+respawnCoolOff = 0
 run = True
 bullets = []          # so that multiple objects of projectile class can be on screen at the same time
 
@@ -172,9 +173,12 @@ while run :
         thug.shootingCoolOff -= 1
     if thug.punchedCoolOff > 0 :
         thug.punchedCoolOff -= 1
-
-    if len(aliens) < enemyCount :
-        aliens.append(enemy(64,64,540,screen_H - 57,(50, 736)))     
+    if respawnCoolOff > 0 :
+        respawnCoolOff -= 1
+    else :
+        if len(aliens) < enemyCount :
+            aliens.append(enemy(64,64,540,screen_H - 57,(50, 736)))   
+            respawnCoolOff = 81  
 
     for event in pygame.event.get() :
         if event.type == pygame.QUIT :
@@ -183,6 +187,7 @@ while run :
     for alien in aliens :                                       # if there are no more aliens = no bullet animation = BUG
         if alien.killed :
             aliens.pop(aliens.index(alien))
+            respawnCoolOff = 81
         for bullet in bullets :                                 # for every bullet in bullets list
             if bullet.y - bullet.radius > alien.hitbox[1] and bullet.y + bullet.radius < alien.hitbox[1] + alien.hitbox[3] : # checks if bulet is vertically within goblin hitbox rec range
                 if bullet.x + bullet.radius > alien.hitbox[0] and bullet.x - bullet.radius < alien.hitbox[0] + alien.hitbox[2] : # checks if bullet is horizontally within hitbox
