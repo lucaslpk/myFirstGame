@@ -6,7 +6,14 @@ pygame.display.set_caption("The GAME.")
 screen_W = 850
 screen_H = 480
 win = pygame.display.set_mode((screen_W, screen_H))
+bg = pygame.image.load('sprites/bg.jpg')
+char =pygame.image.load('sprites/standing.png')
 clock = pygame.time.Clock()
+
+score = 0
+enemyCount = 1
+
+# All Sounds
 bulletSound = pygame.mixer.Sound('sounds/Game_bullet.wav')
 hitSound = pygame.mixer.Sound('sounds/Game_hit.wav')
 punchedSound = pygame.mixer.Sound('sounds/Game_punched.wav')
@@ -14,12 +21,8 @@ respawnSound = pygame.mixer.Sound('sounds/Game_respawn.wav')
 killedSound = pygame.mixer.Sound('sounds/Game_killed.wav')
 music = pygame.mixer.music.load('sounds/Game_music.mp3')
 #pygame.mixer.music.play(-1)
-score = 0
 
-bg = pygame.image.load('sprites/bg.jpg')
-char =pygame.image.load('sprites/standing.png')
-
-
+# All Classes and Functions definitions
 class player(object) : 
     walkLeft =  [pygame.image.load('sprites/L1.png'),pygame.image.load('sprites/L2.png'),pygame.image.load('sprites/L3.png'),pygame.image.load('sprites/L4.png'),pygame.image.load('sprites/L5.png'),pygame.image.load('sprites/L6.png'),pygame.image.load('sprites/L7.png'),pygame.image.load('sprites/L8.png'),pygame.image.load('sprites/L9.png')]
     walkRight = [pygame.image.load('sprites/R1.png'),pygame.image.load('sprites/R2.png'),pygame.image.load('sprites/R3.png'),pygame.image.load('sprites/R4.png'),pygame.image.load('sprites/R5.png'),pygame.image.load('sprites/R6.png'),pygame.image.load('sprites/R7.png'),pygame.image.load('sprites/R8.png'),pygame.image.load('sprites/R9.png')]
@@ -89,11 +92,11 @@ class enemy(object) :
         self.walkCount = 0 
         self.hitbox = (self.x+17, self.y+4, 31, 53) # rec (x, y, w, h)
         self.hitsTaken = 0
-        self.visible = True
+        self.killed = False
         respawnSound.play()
 
     def draw(self, win) :
-        if self.visible :
+        if not self.killed :
             self.move()
             if self.walkCount + 1 >= 33 :        # every 33 steps reset counter because we got set of 22 sprites = 11 in each direction, sprite change every 3 frames
                 self.walkCount = 0
@@ -127,7 +130,7 @@ class enemy(object) :
     def hit(self) :
         self.hitsTaken += 1        
         if self.hitsTaken > 30 :
-            self.visible = False
+            self.killed = True
             killedSound.play()
         else :
             hitSound.play()
@@ -156,10 +159,10 @@ def redrawGameWin() :
         bullet.draw(win)
     pygame.display.update()
 
-#mainloop 
+# Mainloop 
 font = pygame.font.SysFont('comicsans', 30, True)
 thug = player(64,64,40,screen_H - 64)
-aliens = [enemy(64,64,540,screen_H - 57,(50, 736))]
+aliens = []
 run = True
 bullets = []          # so that multiple objects of projectile class can be on screen at the same time
 
@@ -170,11 +173,16 @@ while run :
     if thug.punchedCoolOff > 0 :
         thug.punchedCoolOff -= 1
 
+    if len(aliens) < enemyCount :
+        aliens.append(enemy(64,64,540,screen_H - 57,(50, 736)))     
+
     for event in pygame.event.get() :
         if event.type == pygame.QUIT :
             run = False
 
     for alien in aliens :                                       # if there are no more aliens = no bullet animation = BUG
+        if alien.killed :
+            aliens.pop(aliens.index(alien))
         for bullet in bullets :                                 # for every bullet in bullets list
             if bullet.y - bullet.radius > alien.hitbox[1] and bullet.y + bullet.radius < alien.hitbox[1] + alien.hitbox[3] : # checks if bulet is vertically within goblin hitbox rec range
                 if bullet.x + bullet.radius > alien.hitbox[0] and bullet.x - bullet.radius < alien.hitbox[0] + alien.hitbox[2] : # checks if bullet is horizontally within hitbox
