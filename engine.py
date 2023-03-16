@@ -158,7 +158,7 @@ def redrawGameWin() :
 #mainloop 
 font = pygame.font.SysFont('comicsans', 30, True)
 thug = player(64,64,40,screen_H - 64)
-alien = enemy(64,64,540,screen_H - 57,(50, 750))
+alien = enemy(64,64,540,screen_H - 57,(50, 736))
 run = True
 bullets = []          # so that multiple objects of projectile class can be on screen at the same time
 
@@ -188,49 +188,63 @@ while run :
 
     if thug.punchedCoolOff == 0 :
         if thug.hitbox[1] + thug.hitbox[3] > alien.hitbox[1] + alien.hitbox[3]//2 : # vertical collision is when bottom of thug's hitbox is below center af alien's hitbox, which is where his punching hand is
-            if thug.hitbox[0] + thug.hitbox[2] > alien.hitbox[0] and thug.hitbox[0] < alien.hitbox[0] + alien.hitbox[2] :
+            if thug.hitbox[0] + thug.hitbox[2] > alien.hitbox[0] and thug.hitbox[0] < alien.hitbox[0] :            
                 thug.punchedCoolOff = 27
+                punchedLeft = True
+                thug.punched()
+            elif thug.hitbox[0] < alien.hitbox[0] + alien.hitbox[2] and thug.hitbox[0] > alien.hitbox[0] :
+                thug.punchedCoolOff = 27
+                punchedLeft = False
                 thug.punched()
 
-    if keys[pygame.K_SPACE] and thug.shootingCoolOff == 0 :
-        facing = 0                                      # facing was defined in if/elif branches, so if thug was facing forward = error
-        if thug.left :
-            facing = -1
-        elif thug.right :
-            facing = 1    
-        if len(bullets) < 15 and facing in(-1, 1):       # max 15 bullets at the same time and can't shoot if facing forward
-            bullets.append(projectile(round(thug.x + thug.w//2), round(thug.y +thug.h//2), 5, (255,0,0), facing))
-            thug.shootingCoolOff = 9 
+        if keys[pygame.K_SPACE] and thug.shootingCoolOff == 0 :
+            facing = 0                                      # facing was defined in if/elif branches, so if thug was facing forward = error
+            if thug.left :
+                facing = -1
+            elif thug.right :
+                facing = 1    
+            if len(bullets) < 15 and facing in(-1, 1):       # max 15 bullets at the same time and can't shoot if facing forward
+                bullets.append(projectile(round(thug.x + thug.w//2), round(thug.y +thug.h//2), 5, (255,0,0), facing))
+                thug.shootingCoolOff = 9 
 
-    if keys[pygame.K_LEFT] and thug.x > 0 :
-        thug.x -= thug.v   
-        thug.left = True
-        thug.right = False  
-        thug.standing = False   
-    elif keys[pygame.K_RIGHT] and thug.x < screen_W - thug.w:
-        thug.x += thug.v 
-        thug.left = False
-        thug.right = True
-        thug.standing = False
-    else :              # if neither left nor right key pressed - stand still and reset walkCount 
-        thug.standing = True
-        thug.left = False
-        thug.right = False
-        thug.walkCount = 0 
-    
-    if not thug.isJump :     # up, down and new jump will be suspended while previous jump lasts Edit: up/down was removed, for platform game.
-        if keys[pygame.K_UP] :
-            thug.isJump = True  # TwTim is adding here left = right = False & reset walk count so the thug doesn't move feet while in the air
-    else :
-        if thug.jumpCount >= -10 :
-            if thug.jumpCount >= 0 :
-                thug.y -= (thug.jumpCount ** 2) * 0.25     # up we go!!
-            else :
-                thug.y += (thug.jumpCount ** 2) * 0.25     # what goes up - must come down...
-            thug.jumpCount -= 1
+        if keys[pygame.K_LEFT] and thug.x > 0 :
+            thug.x -= thug.v   
+            thug.left = True
+            thug.right = False  
+            thug.standing = False   
+        elif keys[pygame.K_RIGHT] and thug.x < screen_W - thug.w:
+            thug.x += thug.v 
+            thug.left = False
+            thug.right = True
+            thug.standing = False
+        else :              # if neither left nor right key pressed - stand still and reset walkCount 
+            thug.standing = True
+            thug.walkCount = 0 
+        
+        if not thug.isJump :     # up, down and new jump will be suspended while previous jump lasts Edit: up/down was removed, for platform game.
+            if keys[pygame.K_UP] :
+                thug.isJump = True  # TwTim is adding here left = right = False & reset walk count so the thug doesn't move feet while in the air
         else :
-            thug.isJump = False
-            thug.jumpCount = 10 
+            if thug.jumpCount >= -10 :
+                if thug.jumpCount >= 0 :
+                    thug.y -= (thug.jumpCount ** 2) * 0.25     # up we go!!
+                else :
+                    thug.y += (thug.jumpCount ** 2) * 0.25     # what goes up - must come down...
+                thug.jumpCount -= 1
+            else :
+                thug.isJump = False
+                thug.jumpCount = 10 
+
+    else : # here wht to do within 1s after punch
+            thug.standing = True
+            thug.left = False       # with this
+            thug.right = False      # and this it should blit standing
+            thug.walkCount = 0 
+            if punchedLeft and thug.x > 0 :
+                thug.x -= thug.v * 2
+            elif not punchedLeft and thug.x < screen_W - thug.w:
+                thug.x += thug.v * 2
+
 
     redrawGameWin()
 
