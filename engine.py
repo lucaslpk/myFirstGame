@@ -12,7 +12,7 @@ clock = pygame.time.Clock()
 font1 = pygame.font.SysFont('comicsans', 30, True)
 font2 = pygame.font.SysFont('arial', 60, True)
 score = 0
-enemyCount = 3
+enemyCount = 4
 
 # All Sounds
 bulletSound = pygame.mixer.Sound('sounds/Game_bullet.wav')
@@ -95,15 +95,12 @@ class enemy(object) :
         self.hitsTaken = 0
         self.killed = False
         respawnSound.play()
-        self.landing()
-
-    def landing(self) :
+        self.visible = False
         global ufo 
-        print("I am landing!")
         ufo = saucer(-330,160)
 
     def draw(self, win) :
-        if not self.killed :
+        if not self.killed and self.visible :
             self.move()
             if self.walkCount + 1 >= 33 :        # every 33 steps reset counter because we got set of 22 sprites = 11 in each direction, sprite change every 3 frames
                 self.walkCount = 0
@@ -119,20 +116,23 @@ class enemy(object) :
             pygame.draw.rect(win, (210,43,43), (self.x+50 - self.hitsTaken, self.y, self.hitsTaken, 4))
 
     def move(self) :
-        if self.v > 0 :
-            if self.x + self.v < self.path[1] :    # if it's not going to  reach the right end with the next step
-                self.x += self.v                   # allow him to take that step
-                self.walkCount += 1
-            else :                                 # and if it does
-                self.v *= -1                       # turn around
-                self.walkCount = 0 
-        else :
-            if self.x + self.v > self.path[0] :    # +self.v because it is negative (or 0)    
-                self.x += self.v                   
-                self.walkCount += 1
-            else :                                
-                self.v *= -1                      # powtarzamy tu 2 razy to samo zastanów się czy nie mozna tego skompaktowac
-                self.walkCount = 0 
+        if self.y < screen_H - 57 :
+            self.y += 2
+        else: 
+            if self.v > 0 :
+                if self.x + self.v < self.path[1] :    # if it's not going to  reach the right end with the next step
+                    self.x += self.v                   # allow him to take that step
+                    self.walkCount += 1
+                else :                                 # and if it does
+                    self.v *= -1                       # turn around
+                    self.walkCount = 0 
+            else :
+                if self.x + self.v > self.path[0] :    # +self.v because it is negative (or 0)    
+                    self.x += self.v                   
+                    self.walkCount += 1
+                else :                                
+                    self.v *= -1                      # powtarzamy tu 2 razy to samo zastanów się czy nie mozna tego skompaktowac
+                    self.walkCount = 0 
 
     def hit(self) :
         self.hitsTaken += 1        
@@ -153,8 +153,7 @@ class saucer(object) :
         self.beam = False
         self.timer = 4 * 27   # 4s @ 27 FPS, 
 
-    def move(self) :
-        
+    def move(self) :        
         if self.v != 0 :
             self.x += self.v
         if ufoLandingX - self.x < 560 and self.v != 0 :   # in order to stop in the right place ufo needs to start slowing down @560 distance, slow down by 0.5 per frame. Exact stopping point also depends on original insertion point (here -330) and integer division by initial velocity
@@ -163,8 +162,7 @@ class saucer(object) :
             self.timer -=1
             if self.timer <= 3 * 27 :
                 self.beam = True
-            if self.timer < 2 * 27 :
-                pass   #here is permision to land
+                aliens[-1].visible = True
             if self.timer < 1 * 27 :
                 self.beam = False
             if self.timer < 0 * 27 :
@@ -201,9 +199,9 @@ def redrawGameWin() :
         alien.draw(win)
     for bullet in bullets :
         bullet.draw(win)
-    # if len(aliens) == 0 :
-    #     text = font2.render("   YOU WON!!!   ", 1, (237,225,34), (0,0,255))
-    #     win.blit(text, (screen_W//2 - text.get_width() //2, screen_H //2 - text.get_height()//2))
+    if len(aliens) == 0 :
+        text = font2.render("   YOU WON!!!   ", 1, (237,225,34), (0,0,255))
+        win.blit(text, (screen_W//2 - text.get_width() //2, screen_H //2 - text.get_height()//2))
     pygame.display.update()
 
 # Mainloop 
@@ -225,8 +223,7 @@ while run :
         respawnCoolOff -= 1
     else :
         if len(aliens) < 3 and enemyCount > 0:
-            #ufo = saucer(-330,160)
-            aliens.append(enemy(64,64,ufoLandingX,screen_H - 57,(50, 736)))   
+            aliens.append(enemy(64,64,ufoLandingX - 25, screen_H - 140,(50, 736)))   
             respawnCoolOff = 8 * 27 # 8s @ 27 FPS  
 
     for event in pygame.event.get() :
@@ -301,7 +298,7 @@ while run :
                 thug.isJump = False
                 thug.jumpCount = 10 
 
-    else : # here wht to do within 1s after punch
+    else : # here what to do within 1s after punch
             thug.standing = True
             thug.left = False       # with this
             thug.right = False      # and this it should blit standing
@@ -313,6 +310,5 @@ while run :
 
 
     redrawGameWin()
-
 
 pygame.quit()
