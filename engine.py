@@ -150,7 +150,8 @@ def redrawGameWin() :
     text = font.render("Score: " + str(score), 1, (0,0,0))
     win.blit(text, (650,25))
     thug.draw(win)
-    alien.draw(win)
+    for alien in aliens :
+        alien.draw(win)
     for bullet in bullets :
         bullet.draw(win)
     pygame.display.update()
@@ -158,7 +159,7 @@ def redrawGameWin() :
 #mainloop 
 font = pygame.font.SysFont('comicsans', 30, True)
 thug = player(64,64,40,screen_H - 64)
-alien = enemy(64,64,540,screen_H - 57,(50, 736))
+aliens = [enemy(64,64,540,screen_H - 57,(50, 736))]
 run = True
 bullets = []          # so that multiple objects of projectile class can be on screen at the same time
 
@@ -173,29 +174,31 @@ while run :
         if event.type == pygame.QUIT :
             run = False
 
-    for bullet in bullets :                                 # for every bullet in bullets list
-        if bullet.y - bullet.radius > alien.hitbox[1] and bullet.y + bullet.radius < alien.hitbox[1] + alien.hitbox[3] : # checks if bulet is vertically within goblin hitbox rec range
-            if bullet.x + bullet.radius > alien.hitbox[0] and bullet.x - bullet.radius < alien.hitbox[0] + alien.hitbox[2] : # checks if bullet is horizontally within hitbox
-                alien.hit()     # alien is only hit if the full diameter of the bullet is inside his hitbox, in both directions (check 2 above coniditionals carefully)
-                score +=1                
-                bullets.pop(bullets.index(bullet))          # if bullet hit target remove it from the list
-        if bullet.x > 0 and bullet.x < screen_W :           # if the bullet is on screen (only checks horizontal here)
-            bullet.x += bullet.v                            # move the bullet one frame every time while mainloop runs
-        else:                                               # if off screen
-            bullets.pop(bullets.index(bullet))              # remove from list ==> list.pop()
+    for alien in aliens :                                       # if there are no more aliens = no bullet animation = BUG
+        for bullet in bullets :                                 # for every bullet in bullets list
+            if bullet.y - bullet.radius > alien.hitbox[1] and bullet.y + bullet.radius < alien.hitbox[1] + alien.hitbox[3] : # checks if bulet is vertically within goblin hitbox rec range
+                if bullet.x + bullet.radius > alien.hitbox[0] and bullet.x - bullet.radius < alien.hitbox[0] + alien.hitbox[2] : # checks if bullet is horizontally within hitbox
+                    alien.hit()     # alien is only hit if the full diameter of the bullet is inside his hitbox, in both directions (check 2 above coniditionals carefully)
+                    score +=1                
+                    bullets.pop(bullets.index(bullet))          # if bullet hit target remove it from the list
+            if bullet.x > 0 and bullet.x < screen_W :           # if the bullet is on screen (only checks horizontal here)
+                bullet.x += bullet.v                            # move the bullet one frame every time while mainloop runs
+            else:                                               # if off screen
+                bullets.pop(bullets.index(bullet))              # remove from list ==> list.pop()
 
     keys = pygame.key.get_pressed()
 
     if thug.punchedCoolOff == 0 :
-        if thug.hitbox[1] + thug.hitbox[3] > alien.hitbox[1] + alien.hitbox[3]//2 : # vertical collision is when bottom of thug's hitbox is below center af alien's hitbox, which is where his punching hand is
-            if thug.hitbox[0] + thug.hitbox[2] > alien.hitbox[0] and thug.hitbox[0] < alien.hitbox[0] :            
-                thug.punchedCoolOff = 27
-                punchedLeft = True
-                thug.punched()
-            elif thug.hitbox[0] < alien.hitbox[0] + alien.hitbox[2] and thug.hitbox[0] > alien.hitbox[0] :
-                thug.punchedCoolOff = 27
-                punchedLeft = False
-                thug.punched()
+        for alien in aliens :
+            if thug.hitbox[1] + thug.hitbox[3] > alien.hitbox[1] + alien.hitbox[3]//2 : # vertical collision is when bottom of thug's hitbox is below center af alien's hitbox, which is where his punching hand is
+                if thug.hitbox[0] + thug.hitbox[2] > alien.hitbox[0] and thug.hitbox[0] < alien.hitbox[0] :            
+                    thug.punchedCoolOff = 27
+                    punchedLeft = True
+                    thug.punched()
+                elif thug.hitbox[0] < alien.hitbox[0] + alien.hitbox[2] and thug.hitbox[0] > alien.hitbox[0] :
+                    thug.punchedCoolOff = 27
+                    punchedLeft = False
+                    thug.punched()
 
         if keys[pygame.K_SPACE] and thug.shootingCoolOff == 0 :
             facing = 0                                      # facing was defined in if/elif branches, so if thug was facing forward = error
