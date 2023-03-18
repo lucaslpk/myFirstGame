@@ -12,7 +12,7 @@ clock = pygame.time.Clock()
 font1 = pygame.font.SysFont('comicsans', 30, True)
 font2 = pygame.font.SysFont('arial', 60, True)
 score = 0
-enemyCount = 4
+bodyCount = 0 
 
 # All Sounds
 bulletSound = pygame.mixer.Sound('sounds/Game_bullet.wav')
@@ -70,10 +70,12 @@ class player(object) :
         pygame.draw.rect(win, (210,43,43), (self.x+50 - self.punchesTaken*3, self.y+7, self.punchesTaken*3, 4))
     
     def punched(self) :
+        global run
         self.punchesTaken += 1  
         if self.punchesTaken > 10 :
                 #self.visible = False   we will see if we disaapear thug after he's killed
                 killedSound.play()
+                run = False
         else :
             punchedSound.play()
 
@@ -193,13 +195,13 @@ def redrawGameWin() :
     win.blit(bg, (0,0))
     text = font1.render("Score: " + str(score), 1, (0,0,0))
     win.blit(text, (650,25))
-    thug.draw(win)
     ufo.draw(win)
     for alien in aliens :
         alien.draw(win)
     for bullet in bullets :
         bullet.draw(win)
-    if len(aliens) == 0 :
+    thug.draw(win)    
+    if bodyCount == 6 :
         text = font2.render("   YOU WON!!!   ", 1, (237,225,34), (0,0,255))
         win.blit(text, (screen_W//2 - text.get_width() //2, screen_H //2 - text.get_height()//2))
     pygame.display.update()
@@ -209,6 +211,7 @@ def redrawGameWin() :
 thug = player(64,64,40,screen_H - 64)
 ufoLandingX = 540
 aliens = []
+aliensLanded = 0
 respawnCoolOff = 0
 bullets = []          # so that multiple objects of projectile class can be on screen at the same time
 run = True
@@ -222,9 +225,10 @@ while run :
     if respawnCoolOff > 0 :
         respawnCoolOff -= 1
     else :
-        if len(aliens) < 3 and enemyCount > 0:
+        if len(aliens) < 3 and aliensLanded < 6:
             aliens.append(enemy(64,64,ufoLandingX - 25, screen_H - 140,(50, 736)))   
             respawnCoolOff = 8 * 27 # 8s @ 27 FPS  
+            aliensLanded += 1
 
     for event in pygame.event.get() :
         if event.type == pygame.QUIT :
@@ -234,7 +238,7 @@ while run :
         if alien.killed :
             aliens.pop(aliens.index(alien))
             respawnCoolOff = 3 * 27
-            enemyCount -= 1
+            bodyCount += 1
         for bullet in bullets :                                 # for every bullet in bullets list
             if bullet.y - bullet.radius > alien.hitbox[1] and bullet.y + bullet.radius < alien.hitbox[1] + alien.hitbox[3] : # checks if bulet is vertically within goblin hitbox rec range
                 if bullet.x + bullet.radius > alien.hitbox[0] and bullet.x - bullet.radius < alien.hitbox[0] + alien.hitbox[2] : # checks if bullet is horizontally within hitbox
