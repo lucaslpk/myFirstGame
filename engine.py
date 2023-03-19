@@ -191,6 +191,21 @@ class projectile() :
     def draw(self, win) :
         pygame.draw.circle(win, self.color, (self.x, self.y), self.radius)   # jedynka jest żeby nie był wypełniony, puste dla pełny - zobaczymy
 
+class Button : 
+    def __init__(self, text, x, y, enabled) -> None:
+        self.text = text
+        self.x = x
+        self.y = y
+        self.enabled = enabled
+        self.draw()
+
+    def draw(self) :
+        button_text = font2.render(self.text, True, ('black'))
+        button_rect = pygame.rect.Rect(self.x, self.y, 150, 50)
+        pygame.draw.rect(win, 'gray', button_rect, 0, 5)            # solid grey
+        pygame.draw.rect(win, 'black', button_rect, 5, 5)           # edge in black
+        win.blit(button_text, self.x + 3, self.y + 3)
+
 def redrawGameWin(aliens, bullets, thug, ufoLandingX, score) :
     win.blit(bg, (0,0))
     text = font1.render("Score: " + str(score), 1, (0,0,0))
