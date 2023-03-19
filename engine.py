@@ -76,6 +76,7 @@ class player(object) :
                 #self.visible = False   we will see if we disaapear thug after he's killed
                 killedSound.play()
                 run = False
+                game_over("defeat")
         else :
             punchedSound.play()
 
@@ -155,10 +156,10 @@ class saucer(object) :
         self.beam = False
         self.timer = 4 * 27   # 4s @ 27 FPS, 
 
-    def move(self) :        
+    def move(self, ufoLandingX, aliens) :        
         if self.v != 0 :
             self.x += self.v
-        if ufoLandingX - self.x < 560 and self.v != 0 :   # in order to stop in the right place ufo needs to start slowing down @560 distance, slow down by 0.5 per frame. Exact stopping point also depends on original insertion point (here -330) and integer division by initial velocity
+        if 540 - self.x < 560 and self.v != 0 :   # in order to stop in the right place ufo needs to start slowing down @560 distance, slow down by 0.5 per frame. Exact stopping point also depends on original insertion point (here -330) and integer division by initial velocity
             self.v = self.v - 0.5
         if self.x == ufoLandingX - 160 :
             self.timer -=1
@@ -171,8 +172,8 @@ class saucer(object) :
                 self.v -= 0.5
 
 
-    def draw(self, win) :
-        self.move()
+    def draw(self, win, ufoLandingX, aliens) :
+        self.move(ufoLandingX, aliens)
         if self.beam :
             win.blit(self.beamOn, (self.x,self.y))
         else :
@@ -191,128 +192,138 @@ class projectile() :
     def draw(self, win) :
         pygame.draw.circle(win, self.color, (self.x, self.y), self.radius)   # jedynka jest żeby nie był wypełniony, puste dla pełny - zobaczymy
 
-def redrawGameWin() :
+def redrawGameWin(aliens, bullets, thug, ufoLandingX) :
     win.blit(bg, (0,0))
     text = font1.render("Score: " + str(score), 1, (0,0,0))
     win.blit(text, (650,25))
-    ufo.draw(win)
+    ufo.draw(win, ufoLandingX, aliens)
     for alien in aliens :
         alien.draw(win)
     for bullet in bullets :
         bullet.draw(win)
     thug.draw(win)    
     if bodyCount == 6 :
-        text = font2.render("   YOU WON!!!   ", 1, (237,225,34), (0,0,255))
-        win.blit(text, (screen_W//2 - text.get_width() //2, screen_H //2 - text.get_height()//2))
+        global run
+        run = False
+        game_over("victory")
     pygame.display.update()
 
-# Mainloop 
-# vars to initilize at start
-thug = player(64,64,40,screen_H - 64)
-ufoLandingX = 540
-aliens = []
-aliensLanded = 0
-respawnCoolOff = 0
-bullets = []          # so that multiple objects of projectile class can be on screen at the same time
-run = True
+def main() :
+    # Mainloop 
+    global score
+    global bodyCount
+    global run
+    # vars to initilize at start
+    thug = player(64,64,40,screen_H - 64)
+    ufoLandingX = 540
+    aliens = []
+    aliensLanded = 0
+    respawnCoolOff = 0
+    bullets = []          # so that multiple objects of projectile class can be on screen at the same time
+    run = True
 
-while run :
-    clock.tick(27)    # FPS from clock instance of pygame.time.Clock class 
-    if thug.shootingCoolOff > 0 :
-        thug.shootingCoolOff -= 1
-    if thug.punchedCoolOff > 0 :
-        thug.punchedCoolOff -= 1
-    if respawnCoolOff > 0 :
-        respawnCoolOff -= 1
-    else :
-        if len(aliens) < 3 and aliensLanded < 6:
-            aliens.append(enemy(64,64,ufoLandingX - 25, screen_H - 140,(50, 736)))   
-            respawnCoolOff = 8 * 27 # 8s @ 27 FPS  
-            aliensLanded += 1
-
-    for event in pygame.event.get() :
-        if event.type == pygame.QUIT :
-            run = False
-
-    for alien in aliens :                                       # if there are no more aliens = no bullet animation = SERIOUS BUG
-        if alien.killed :
-            aliens.pop(aliens.index(alien))
-            respawnCoolOff = 3 * 27
-            bodyCount += 1
-        for bullet in bullets :                                 # for every bullet in bullets list
-            if bullet.y - bullet.radius > alien.hitbox[1] and bullet.y + bullet.radius < alien.hitbox[1] + alien.hitbox[3] : # checks if bulet is vertically within goblin hitbox rec range
-                if bullet.x + bullet.radius > alien.hitbox[0] and bullet.x - bullet.radius < alien.hitbox[0] + alien.hitbox[2] : # checks if bullet is horizontally within hitbox
-                    alien.hit()     # alien is only hit if the full diameter of the bullet is inside his hitbox, in both directions (check 2 above coniditionals carefully)
-                    score +=1                
-                    bullets.pop(bullets.index(bullet))          # if bullet hit target remove it from the list
-            if bullet.x > 0 and bullet.x < screen_W :           # if the bullet is on screen (only checks horizontal here)
-                bullet.x += bullet.v                            # move the bullet one frame every time while mainloop runs
-            else:                                               # if off screen
-                bullets.pop(bullets.index(bullet))              # remove from list ==> list.pop()
-
-    keys = pygame.key.get_pressed()
-
-    if thug.punchedCoolOff == 0 :
-        for alien in aliens :
-            if thug.hitbox[1] + thug.hitbox[3] > alien.hitbox[1] + alien.hitbox[3]//2 : # vertical collision is when bottom of thug's hitbox is below center af alien's hitbox, which is where his punching hand is
-                if thug.hitbox[0] + thug.hitbox[2] > alien.hitbox[0] and thug.hitbox[0] < alien.hitbox[0] :            
-                    thug.punchedCoolOff = 27
-                    punchedLeft = True
-                    thug.punched()
-                elif thug.hitbox[0] < alien.hitbox[0] + alien.hitbox[2] and thug.hitbox[0] > alien.hitbox[0] :
-                    thug.punchedCoolOff = 27
-                    punchedLeft = False
-                    thug.punched()
-
-        if keys[pygame.K_SPACE] and thug.shootingCoolOff == 0 :
-            facing = 0                                      # facing was defined in if/elif branches, so if thug was facing forward = error
-            if thug.left :
-                facing = -1
-            elif thug.right :
-                facing = 1    
-            if len(bullets) < 15 and facing in(-1, 1):       # max 15 bullets at the same time and can't shoot if facing forward
-                bullets.append(projectile(round(thug.x + thug.w//2), round(thug.y +thug.h//2), 5, (255,0,0), facing))
-                thug.shootingCoolOff = 9 
-
-        if keys[pygame.K_LEFT] and thug.x > 0 :
-            thug.x -= thug.v   
-            thug.left = True
-            thug.right = False  
-            thug.standing = False   
-        elif keys[pygame.K_RIGHT] and thug.x < screen_W - thug.w:
-            thug.x += thug.v 
-            thug.left = False
-            thug.right = True
-            thug.standing = False
-        else :              # if neither left nor right key pressed - stand still and reset walkCount 
-            thug.standing = True
-            thug.walkCount = 0 
-        
-        if not thug.isJump :     # up, down and new jump will be suspended while previous jump lasts Edit: up/down was removed, for platform game.
-            if keys[pygame.K_UP] :
-                thug.isJump = True  # TwTim is adding here left = right = False & reset walk count so the thug doesn't move feet while in the air
+    while run :
+        clock.tick(27)    # FPS from clock instance of pygame.time.Clock class 
+        if thug.shootingCoolOff > 0 :
+            thug.shootingCoolOff -= 1
+        if thug.punchedCoolOff > 0 :
+            thug.punchedCoolOff -= 1
+        if respawnCoolOff > 0 :
+            respawnCoolOff -= 1
         else :
-            if thug.jumpCount >= -10 :
-                if thug.jumpCount >= 0 :
-                    thug.y -= (thug.jumpCount ** 2) * 0.25     # up we go!!
-                else :
-                    thug.y += (thug.jumpCount ** 2) * 0.25     # what goes up - must come down...
-                thug.jumpCount -= 1
+            if len(aliens) < 3 and aliensLanded < 6:
+                aliens.append(enemy(64,64,ufoLandingX - 25, screen_H - 140,(50, 736)))   
+                respawnCoolOff = 8 * 27 # 8s @ 27 FPS  
+                aliensLanded += 1
+
+        for event in pygame.event.get() :
+            if event.type == pygame.QUIT :
+                run = False
+
+        for alien in aliens :                                       # if there are no more aliens = no bullet animation = SERIOUS BUG
+            if alien.killed :
+                aliens.pop(aliens.index(alien))
+                respawnCoolOff = 3 * 27
+                bodyCount += 1
+            for bullet in bullets :                                 # for every bullet in bullets list
+                if bullet.y - bullet.radius > alien.hitbox[1] and bullet.y + bullet.radius < alien.hitbox[1] + alien.hitbox[3] : # checks if bulet is vertically within goblin hitbox rec range
+                    if bullet.x + bullet.radius > alien.hitbox[0] and bullet.x - bullet.radius < alien.hitbox[0] + alien.hitbox[2] : # checks if bullet is horizontally within hitbox
+                        alien.hit()     # alien is only hit if the full diameter of the bullet is inside his hitbox, in both directions (check 2 above coniditionals carefully)
+                        score +=1                
+                        bullets.pop(bullets.index(bullet))          # if bullet hit target remove it from the list
+                if bullet.x > 0 and bullet.x < screen_W :           # if the bullet is on screen (only checks horizontal here)
+                    bullet.x += bullet.v                            # move the bullet one frame every time while mainloop runs
+                else:                                               # if off screen
+                    bullets.pop(bullets.index(bullet))              # remove from list ==> list.pop()
+
+        keys = pygame.key.get_pressed()
+
+        if thug.punchedCoolOff == 0 :
+            for alien in aliens :
+                if thug.hitbox[1] + thug.hitbox[3] > alien.hitbox[1] + alien.hitbox[3]//2 : # vertical collision is when bottom of thug's hitbox is below center af alien's hitbox, which is where his punching hand is
+                    if thug.hitbox[0] + thug.hitbox[2] > alien.hitbox[0] and thug.hitbox[0] < alien.hitbox[0] :            
+                        thug.punchedCoolOff = 27
+                        punchedLeft = True
+                        thug.punched()
+                    elif thug.hitbox[0] < alien.hitbox[0] + alien.hitbox[2] and thug.hitbox[0] > alien.hitbox[0] :
+                        thug.punchedCoolOff = 27
+                        punchedLeft = False
+                        thug.punched()
+
+            if keys[pygame.K_SPACE] and thug.shootingCoolOff == 0 :
+                facing = 0                                      # facing was defined in if/elif branches, so if thug was facing forward = error
+                if thug.left :
+                    facing = -1
+                elif thug.right :
+                    facing = 1    
+                if len(bullets) < 15 and facing in(-1, 1):       # max 15 bullets at the same time and can't shoot if facing forward
+                    bullets.append(projectile(round(thug.x + thug.w//2), round(thug.y +thug.h//2), 5, (255,0,0), facing))
+                    thug.shootingCoolOff = 9 
+
+            if keys[pygame.K_LEFT] and thug.x > 0 :
+                thug.x -= thug.v   
+                thug.left = True
+                thug.right = False  
+                thug.standing = False   
+            elif keys[pygame.K_RIGHT] and thug.x < screen_W - thug.w:
+                thug.x += thug.v 
+                thug.left = False
+                thug.right = True
+                thug.standing = False
+            else :              # if neither left nor right key pressed - stand still and reset walkCount 
+                thug.standing = True
+                thug.walkCount = 0 
+            
+            if not thug.isJump :     # up, down and new jump will be suspended while previous jump lasts Edit: up/down was removed, for platform game.
+                if keys[pygame.K_UP] :
+                    thug.isJump = True  # TwTim is adding here left = right = False & reset walk count so the thug doesn't move feet while in the air
             else :
-                thug.isJump = False
-                thug.jumpCount = 10 
+                if thug.jumpCount >= -10 :
+                    if thug.jumpCount >= 0 :
+                        thug.y -= (thug.jumpCount ** 2) * 0.25     # up we go!!
+                    else :
+                        thug.y += (thug.jumpCount ** 2) * 0.25     # what goes up - must come down...
+                    thug.jumpCount -= 1
+                else :
+                    thug.isJump = False
+                    thug.jumpCount = 10 
 
-    else : # here what to do within 1s after punch
-            thug.standing = True
-            thug.left = False       # with this
-            thug.right = False      # and this it should blit standing
-            thug.walkCount = 0 
-            if punchedLeft and thug.x > 0 :
-                thug.x -= thug.v * 2
-            elif not punchedLeft and thug.x < screen_W - thug.w:
-                thug.x += thug.v * 2
+        else : # here what to do within 1s after punch
+                thug.standing = True
+                thug.left = False       # with this
+                thug.right = False      # and this it should blit standing
+                thug.walkCount = 0 
+                if punchedLeft and thug.x > 0 :
+                    thug.x -= thug.v * 2
+                elif not punchedLeft and thug.x < screen_W - thug.w:
+                    thug.x += thug.v * 2
 
 
-    redrawGameWin()
+        redrawGameWin(aliens, bullets, thug, ufoLandingX)
 
+def game_over(result):
+    print("Game Over: " + result + "!!!")
+
+
+main()
 pygame.quit()
