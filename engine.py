@@ -7,12 +7,10 @@ screen_W = 850
 screen_H = 480
 win = pygame.display.set_mode((screen_W, screen_H))
 bg = pygame.image.load('sprites/bg.jpg')
-char =pygame.image.load('sprites/standing.png')
 clock = pygame.time.Clock()
 font1 = pygame.font.SysFont('comicsans', 30, True)
 font2 = pygame.font.SysFont('arial', 60, True)
-score = 0
-bodyCount = 0 
+
 
 # All Sounds
 bulletSound = pygame.mixer.Sound('sounds/Game_bullet.wav')
@@ -27,6 +25,7 @@ music = pygame.mixer.music.load('sounds/Game_music.mp3')
 class player(object) : 
     walkLeft =  [pygame.image.load('sprites/L1.png'),pygame.image.load('sprites/L2.png'),pygame.image.load('sprites/L3.png'),pygame.image.load('sprites/L4.png'),pygame.image.load('sprites/L5.png'),pygame.image.load('sprites/L6.png'),pygame.image.load('sprites/L7.png'),pygame.image.load('sprites/L8.png'),pygame.image.load('sprites/L9.png')]
     walkRight = [pygame.image.load('sprites/R1.png'),pygame.image.load('sprites/R2.png'),pygame.image.load('sprites/R3.png'),pygame.image.load('sprites/R4.png'),pygame.image.load('sprites/R5.png'),pygame.image.load('sprites/R6.png'),pygame.image.load('sprites/R7.png'),pygame.image.load('sprites/R8.png'),pygame.image.load('sprites/R9.png')]
+    char = pygame.image.load('sprites/standing.png')
 
     def __init__(self, w,h,x,y) -> None:
         self.w = w      # initial position (x,y)         (0,0)------->
@@ -64,7 +63,7 @@ class player(object) :
             elif self.right :
                 win.blit(self.walkRight[self.walkCount//3], (self.x,self.y))
             else :              # this will blit our thug facing screen if both self.left/right are false, which is the case only at the beginning of the game, any other time he stops, we will be facing in the last direction that he walked
-                win.blit(char,(self.x,self.y))
+                win.blit(self.char,(self.x,self.y))
         self.hitbox = (self.x+18, self.y+14, 26, 50)        # update hitbox's position (as dimension stay the same, 26x50)
         pygame.draw.rect(win, (43,166,57), (self.x+20, self.y+7, 30 - self.punchesTaken*3, 4))
         pygame.draw.rect(win, (210,43,43), (self.x+50 - self.punchesTaken*3, self.y+7, self.punchesTaken*3, 4))
@@ -192,7 +191,7 @@ class projectile() :
     def draw(self, win) :
         pygame.draw.circle(win, self.color, (self.x, self.y), self.radius)   # jedynka jest żeby nie był wypełniony, puste dla pełny - zobaczymy
 
-def redrawGameWin(aliens, bullets, thug, ufoLandingX) :
+def redrawGameWin(aliens, bullets, thug, ufoLandingX, score) :
     win.blit(bg, (0,0))
     text = font1.render("Score: " + str(score), 1, (0,0,0))
     win.blit(text, (650,25))
@@ -202,18 +201,15 @@ def redrawGameWin(aliens, bullets, thug, ufoLandingX) :
     for bullet in bullets :
         bullet.draw(win)
     thug.draw(win)    
-    if bodyCount == 6 :
-        global run
-        run = False
-        game_over("victory")
+
     pygame.display.update()
 
 def main() :
     # Mainloop 
-    global score
-    global bodyCount
     global run
-    # vars to initilize at start
+    # vars to initilize at start    s
+    score = 0
+    bodyCount = 0
     thug = player(64,64,40,screen_H - 64)
     ufoLandingX = 540
     aliens = []
@@ -224,6 +220,12 @@ def main() :
 
     while run :
         clock.tick(27)    # FPS from clock instance of pygame.time.Clock class 
+        if bodyCount == 6 :
+            run = False
+            game_over("victory")
+
+
+
         if thug.shootingCoolOff > 0 :
             thug.shootingCoolOff -= 1
         if thug.punchedCoolOff > 0 :
@@ -319,7 +321,7 @@ def main() :
                     thug.x += thug.v * 2
 
 
-        redrawGameWin(aliens, bullets, thug, ufoLandingX)
+        redrawGameWin(aliens, bullets, thug, ufoLandingX, score)
 
 def game_over(result):
     print("Game Over: " + result + "!!!")
