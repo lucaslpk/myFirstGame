@@ -10,6 +10,7 @@ bg = pygame.image.load('sprites/bg.jpg')
 clock = pygame.time.Clock()
 font1 = pygame.font.SysFont('comicsans', 30, True)
 font2 = pygame.font.SysFont('arial', 60, True)
+font3 = pygame.font.SysFont('arial', 20, True)
 
 
 # All Sounds
@@ -74,7 +75,6 @@ class player(object) :
         if self.punchesTaken > 10 :
                 #self.visible = False   we will see if we disaapear thug after he's killed
                 killedSound.play()
-                run = False
                 game_over("defeat")
         else :
             punchedSound.play()
@@ -197,14 +197,23 @@ class Button :
         self.x = x
         self.y = y
         self.enabled = enabled
-        self.draw()
+        self.draw(win)
 
-    def draw(self) :
-        button_text = font2.render(self.text, True, ('black'))
+    def draw(self, win) :
+        button_text = font3.render(self.text, True, ('black'))
         button_rect = pygame.rect.Rect(self.x, self.y, 150, 50)
         pygame.draw.rect(win, 'gray', button_rect, 0, 5)            # solid grey
-        pygame.draw.rect(win, 'black', button_rect, 5, 5)           # edge in black
-        win.blit(button_text, self.x + 3, self.y + 3)
+        pygame.draw.rect(win, 'black', button_rect, 2, 5)           # edge in black
+        win.blit(button_text, (self.x + 75 - button_text.get_width()//2, self.y + 25- button_text.get_height()//2))
+
+    def check_click(self) :
+        mouse_pos = pygame.mouse.get_pos()
+        left_click = pygame.mouse.get_pressed()[0]  # get_pressed method returns all mouse button presses, [0] index is for left MB
+        button_rect = pygame.rect.Rect(self.x, self.y, 150, 50)  # redefining same thing as in draw()?? Not a super elegant solution from tutorial - rethink approach
+        if left_click and button_rect.collidepoint(mouse_pos) and self.enabled :
+            return True
+        else:
+            return False
 
 def redrawGameWin(aliens, bullets, thug, ufoLandingX, score) :
     win.blit(bg, (0,0))
@@ -236,10 +245,8 @@ def main() :
     while run :
         clock.tick(27)    # FPS from clock instance of pygame.time.Clock class 
         if bodyCount == 6 :
-            run = False
+            # run = False
             game_over("victory")
-
-
 
         if thug.shootingCoolOff > 0 :
             thug.shootingCoolOff -= 1
@@ -277,7 +284,7 @@ def main() :
 
         if thug.punchedCoolOff == 0 :
             for alien in aliens :
-                if thug.hitbox[1] + thug.hitbox[3] > alien.hitbox[1] + alien.hitbox[3]//2 : # vertical collision is when bottom of thug's hitbox is below center af alien's hitbox, which is where his punching hand is
+                if thug.hitbox[1] + thug.hitbox[3] > alien.hitbox[1] + alien.hitbox[3]//2 and thug.hitbox[1] < alien.hitbox[1] + alien.hitbox[3]//2: # vertical collision is when bottom of thug's hitbox is below center af alien's hitbox, which is where his punching hand is and punching hand height is below top of thug hitbox, otherwise it would detect collision with alien stil in the process of landing
                     if thug.hitbox[0] + thug.hitbox[2] > alien.hitbox[0] and thug.hitbox[0] < alien.hitbox[0] :            
                         thug.punchedCoolOff = 27
                         punchedLeft = True
@@ -335,12 +342,28 @@ def main() :
                 elif not punchedLeft and thug.x < screen_W - thug.w:
                     thug.x += thug.v * 2
 
-
         redrawGameWin(aliens, bullets, thug, ufoLandingX, score)
 
 def game_over(result):
-    print("Game Over: " + result + "!!!")
+    pressed = False 
+    button_replay = Button("Play Again", screen_W//2 - screen_W//12 - 100, screen_H//2 + 25, True)
+    button_quit = Button("Quit", screen_W//2 + screen_W/12 - 50, screen_H//2 + 25, True)
+    while not pressed :
+        clock.tick(10)
+        for event in pygame.event.get() :
+            if event.type == pygame.QUIT :
+                pygame.quit()
+        if button_replay.check_click() :
+            main()
+        if button_quit.check_click() :
+            pygame.quit()
+        pygame.draw.rect(win, (32,245,246), (screen_W//4, screen_H//4, screen_W//2, screen_H//2), 0, 10)
+        text = font1.render("Game over: " + result + "!", 1, (0,0,0))
+        win.blit(text, (screen_W//2 - text.get_width()//2, screen_H//2 - 50))
+        button_replay.draw(win)
+        button_quit.draw(win)
 
+        pygame.display.update()
 
 main()
 pygame.quit()
