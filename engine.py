@@ -22,7 +22,7 @@ killedSound = pygame.mixer.Sound('sounds/Game_killed.wav')
 music = pygame.mixer.music.load('sounds/Game_music.mp3')
 #pygame.mixer.music.play(-1)
 
-# All Classes and Functions definitions
+# All Classes and Functions - definitions
 class player(object) : 
     walkLeft =  [pygame.image.load('sprites/L1.png'),pygame.image.load('sprites/L2.png'),pygame.image.load('sprites/L3.png'),pygame.image.load('sprites/L4.png'),pygame.image.load('sprites/L5.png'),pygame.image.load('sprites/L6.png'),pygame.image.load('sprites/L7.png'),pygame.image.load('sprites/L8.png'),pygame.image.load('sprites/L9.png')]
     walkRight = [pygame.image.load('sprites/R1.png'),pygame.image.load('sprites/R2.png'),pygame.image.load('sprites/R3.png'),pygame.image.load('sprites/R4.png'),pygame.image.load('sprites/R5.png'),pygame.image.load('sprites/R6.png'),pygame.image.load('sprites/R7.png'),pygame.image.load('sprites/R8.png'),pygame.image.load('sprites/R9.png')]
@@ -219,6 +219,12 @@ def redrawGameWin(aliens, bullets, thug, ufoLandingX, score) :
     win.blit(bg, (0,0))
     text = font1.render("Score: " + str(score), 1, (0,0,0))
     win.blit(text, (650,25))
+    text = font3.render("Left / Right arrows to Move", 1, (255,0,0))
+    win.blit(text, (25,25))
+    text = font3.render("Up arrow to Jump", 1, (255,0,0))
+    win.blit(text, (25,50))
+    text = font3.render("Space to Shoot", 1, (255,0,0))
+    win.blit(text, (25,75))
     ufo.draw(win, ufoLandingX, aliens)
     for alien in aliens :
         alien.draw(win)
@@ -280,7 +286,7 @@ def main() :
                 else:                                               # if off screen
                     bullets.pop(bullets.index(bullet))              # remove from list ==> list.pop()
 
-        keys = pygame.key.get_pressed()
+        keys = pygame.key.get_pressed()   # this works different than keys in Sudoku, this returns sth like a dictionary(???) that contains pairs, where key is any of the 106 keys on keybord and value is True/False depending on whether it is pressed or not
 
         if thug.punchedCoolOff == 0 :
             for alien in aliens :
